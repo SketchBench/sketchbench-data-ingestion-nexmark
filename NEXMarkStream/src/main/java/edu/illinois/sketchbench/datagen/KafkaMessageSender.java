@@ -13,7 +13,7 @@ import java.util.Properties;
  */
 public class KafkaMessageSender {
 
-    private static final String BOOTSTRAP_SERVERS = "localhost:9092";
+    private static final String BOOTSTRAP_SERVERS = "kafka:9092";
     private static final String TOPIC1 = "mytopic";
     private static final Logger log = Logger.getLogger(KafkaMessageSender.class);
 

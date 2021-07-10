@@ -108,7 +108,8 @@ public class JSONAuctionStreamGenerator extends Thread{
         // now go into a loop generating bids and persons and so on
         // want on average 10 items/person and 10 bids/item
         int count = 0;
-        while(count < numGenCalls) {
+      //  while(count < numGenCalls) {
+        while(true) {
 
             // generating a person approximately 10th time will
             // give is 10 items/person since we generate on average
@@ -234,7 +235,7 @@ public class JSONAuctionStreamGenerator extends Thread{
 
 
                 try {
-                    Thread.currentThread().sleep(100);
+                    Thread.currentThread().sleep(10);
                 } catch (InterruptedException e) {
                     log.info("Error: " + e.getMessage());
                 }
@@ -418,16 +419,16 @@ public class JSONAuctionStreamGenerator extends Thread{
             try {
 
 
-                KafkaMessageSender.runProducer2(jsonDataItem.toString(),producer1);
-                log.info("Message from Stream2 sent to kafaka by "
-                        + Thread.currentThread().getName());
-
-                              incrementCommon();
+//                KafkaMessageSender.runProducer2(jsonDataItem.toString(),producer1);
+//                log.info("Message from Stream2 sent to kafaka by "
+//                        + Thread.currentThread().getName());
+//
+//                              incrementCommon();
 
 
 
                 try {
-                    Thread.currentThread().sleep(100);
+                    Thread.currentThread().sleep(10);
                 } catch (InterruptedException e) {
                     log.info("Error: " + e.getMessage());
                 }
@@ -673,7 +674,7 @@ public class JSONAuctionStreamGenerator extends Thread{
 
 
                 try {
-                    Thread.currentThread().sleep(100);
+                    Thread.currentThread().sleep(10);
                 } catch (InterruptedException e) {
                     log.info("Error: " + e.getMessage());
                 }
