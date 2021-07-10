@@ -52,8 +52,8 @@ public class NEXMarkGenerator {
         try {
             // set defaults then process args
             // num times to run generator
-            int gencalls = DEFAULT_GEN_CALLS;w
-            // print with formatting or not 
+            int gencalls = DEFAULT_GEN_CALLS;
+            // print with formatting or not
             boolean prettyprint = DEFAULT_PRETTYPRINT;
 
             // process args
