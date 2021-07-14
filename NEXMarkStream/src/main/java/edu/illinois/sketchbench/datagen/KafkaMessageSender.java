@@ -13,14 +13,30 @@ import java.util.Properties;
  */
 public class KafkaMessageSender {
 
-    private static final String BOOTSTRAP_SERVERS = "kafka:9092";
-    private static final String TOPIC1 = "mytopic";
+    private static String BOOTSTRAP_SERVERS;
+    private static String TOPIC1;
     private static final Logger log = Logger.getLogger(KafkaMessageSender.class);
 
     public static Producer<String, String> createProducer() {
         Properties props = new Properties();
         props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
                 BOOTSTRAP_SERVERS);
+        props.put(ProducerConfig.CLIENT_ID_CONFIG, "KafkaExampleProducer");
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+                org.apache.kafka.common.serialization.LongSerializer.class.getName());
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+                org.apache.kafka.common.serialization.StringSerializer.class.getName());
+        return new KafkaProducer<>(props);
+    }
+    public static Producer<String, String> createProducer(String kafkaEndpoint, String kafkaTopic) {
+        Properties props = new Properties();
+        TOPIC1 = kafkaTopic;
+
+        log.info("kafka endpoint - "+kafkaEndpoint);
+        log.info("kafka topic - "+kafkaTopic);
+
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                kafkaEndpoint);
         props.put(ProducerConfig.CLIENT_ID_CONFIG, "KafkaExampleProducer");
         props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
                 org.apache.kafka.common.serialization.LongSerializer.class.getName());
@@ -37,7 +53,7 @@ public class KafkaMessageSender {
         try {
             producer.send(record, null);
             producer.flush();
-            //log.info("Message sent to kafka topic of " + TOPIC);
+            log.info("Message sent to kafka topic of " + TOPIC1);
         } finally {
             producer.flush();
             //producer.close();

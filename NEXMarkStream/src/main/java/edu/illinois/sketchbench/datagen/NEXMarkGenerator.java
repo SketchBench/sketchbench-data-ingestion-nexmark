@@ -48,6 +48,11 @@ public class NEXMarkGenerator {
     // slow down parsing.)  
     public static boolean DEFAULT_PRETTYPRINT = true;
 
+
+    public static String DEFAULT_KAFKA_ENDPOINT = "localhost:9092";
+    public static String DEFAULT_KAFKA_TOPIC = "nexmarkStream";
+    public static int DEFAULT_SLEEP_MILLIS = 100;
+
     public static void main(String[] args) {
         try {
             // set defaults then process args
@@ -55,6 +60,10 @@ public class NEXMarkGenerator {
             int gencalls = DEFAULT_GEN_CALLS;
             // print with formatting or not
             boolean prettyprint = DEFAULT_PRETTYPRINT;
+
+            String kafkaEndpoint = DEFAULT_KAFKA_ENDPOINT;
+            String topic = DEFAULT_KAFKA_TOPIC;
+            int sleepMillis = DEFAULT_SLEEP_MILLIS;
 
             // process args
             for (int i = 0; i < args.length; i++) {
@@ -66,14 +75,23 @@ public class NEXMarkGenerator {
                 } else if (args[i].equals("-prettyprint")) {
                     prettyprint = Boolean.valueOf(args[i + 1]).booleanValue();
                     i++;
-                } else {
+                } else if (args[i].equals("-kafkaBootServers")) {
+                    kafkaEndpoint = args[i + 1];
+                    i++;
+                } else if (args[i].equals("-topic")) {
+                    topic = args[i + 1];
+                    i++;
+                } else if (args[i].equals("-sleep")) {
+                    sleepMillis = Integer.valueOf(args[i + 1]).intValue();
+                    i++;
+                }else {
                     usage();
                 }
             }
 
             // create generator
             JSONAuctionStreamGenerator generator =
-                new JSONAuctionStreamGenerator(gencalls, prettyprint);
+                new JSONAuctionStreamGenerator(gencalls, kafkaEndpoint, topic, sleepMillis);
 
             generator.generateStream();
 

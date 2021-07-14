@@ -7,5 +7,3 @@ RUN mvn install
 FROM openjdk:18-slim
 WORKDIR /NEXMarkStream
 COPY --from=builder /usr/local/var/src/NEXMarkStream/target/NEXMarkStream-jar-with-dependencies.jar .
-#RUN java -cp NEXMarkStream-jar-with-dependencies.jar edu.illinois.sketchbench.datagen.NEXMarkGenerator
-#CMD ["java" ,"-cp", "NEXMarkStream-jar-with-dependencies.jar", "edu.illinois.sketchbench.datagen.NEXMarkGenerator"]

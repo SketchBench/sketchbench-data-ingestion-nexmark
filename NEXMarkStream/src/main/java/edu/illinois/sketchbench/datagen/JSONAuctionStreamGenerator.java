@@ -38,6 +38,9 @@ public class JSONAuctionStreamGenerator extends Thread{
     private BufferedWriter writer;
     private int numGenCalls;
     private boolean usePrettyPrint;
+    private String kafkaBootServers;
+    private String kafkaTopic;
+    private int threadSleep;
 
     private static int MAXINCREMENT_MILLISEC = 1000;
     private static int WARP = 10;
@@ -46,11 +49,11 @@ public class JSONAuctionStreamGenerator extends Thread{
     public static int DEFAULT_GEN_CALLS = 3000;
     public static boolean DEFAULT_PRETTYPRINT = true;
 
-    public boolean LIMIT_ATTRIBUTES = false;
+    public boolean LIMIT_ATTRIBUTES = true;
     private static final Logger log = Logger.getLogger(JSONAuctionStreamGenerator.class);
     JSONAuctionStreamGenerator auctionStreamGenerator;
 
-    Producer<String, String> producer1 = KafkaMessageSender.createProducer();
+    Producer<String, String> producer1;
     static final ReentrantLock lock = new ReentrantLock();
 
     long startTime2;
@@ -62,6 +65,22 @@ public class JSONAuctionStreamGenerator extends Thread{
         usePrettyPrint = prettyprint;
         openAuctions = new OpenAuctions(cal);
 
+        if(usePrettyPrint) {
+            tab = "\t";
+            tab2 = "\t\t";
+            tab3 = "\t\t\t";
+            nl = "\n";
+        }
+    }
+
+    public JSONAuctionStreamGenerator(int genCalls, String kafkaEndpoint, String topic, int sleepMillis){
+
+        numGenCalls = genCalls;
+        kafkaBootServers = kafkaEndpoint;
+        kafkaTopic = topic;
+        threadSleep = sleepMillis;
+        openAuctions = new OpenAuctions(cal);
+        producer1 = KafkaMessageSender.createProducer(kafkaBootServers,kafkaTopic);
         if(usePrettyPrint) {
             tab = "\t";
             tab2 = "\t\t";
@@ -227,15 +246,15 @@ public class JSONAuctionStreamGenerator extends Thread{
 //                }
                 KafkaMessageSender.runProducer1(jsonDataItem.toString(),producer1);
 
-                log.info("Message from Stream3 sent to kafaka by "
-                        + Thread.currentThread().getName());
-
-                incrementCommon();
+//                log.info("Message from Stream3 sent to kafka by "
+//                        + Thread.currentThread().getName());
+//
+//                incrementCommon();
 
 
 
                 try {
-                    Thread.currentThread().sleep(10);
+                    Thread.currentThread().sleep(threadSleep);
                 } catch (InterruptedException e) {
                     log.info("Error: " + e.getMessage());
                 }
@@ -428,7 +447,7 @@ public class JSONAuctionStreamGenerator extends Thread{
 
 
                 try {
-                    Thread.currentThread().sleep(10);
+                    Thread.currentThread().sleep(threadSleep);
                 } catch (InterruptedException e) {
                     log.info("Error: " + e.getMessage());
                 }
@@ -674,7 +693,7 @@ public class JSONAuctionStreamGenerator extends Thread{
 
 
                 try {
-                    Thread.currentThread().sleep(10);
+                    Thread.currentThread().sleep(threadSleep);
                 } catch (InterruptedException e) {
                     log.info("Error: " + e.getMessage());
                 }
