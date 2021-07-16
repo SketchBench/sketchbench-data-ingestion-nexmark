@@ -4,7 +4,7 @@ ARG SPARK_VERSION=3.0.2
 ARG HADOOP_VERSION=3.2
 
 ENV SPARK_HOME=/opt/spark
-
+ENV SPARKSUBMITOPTIONS="--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.0.2,org.apache.spark:spark-streaming-kafka-0-10-assembly_2.12:3.0.2"
 USER 0
 
 # Spark with HADOOP
