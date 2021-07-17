@@ -1,0 +1,134 @@
+version: "3.9"
+services:
+  zookeeper:
+    image: docker.io/bitnami/zookeeper:3.7
+    container_name: zookeeper
+    ports:
+      - 2181:2181
+    volumes:
+      - zookeeper_data:/bitnami
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+  kafka:
+    image: docker.io/bitnami/kafka:2
+    container_name: kafka
+    ports:
+      - 9092:9092
+    volumes:
+      - kafka_data:/bitnami
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=CLIENT://:29092,EXTERNAL://:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=CLIENT://kafka:29092,EXTERNAL://kafka:9092
+      - KAFKA_INTER_BROKER_LISTENER_NAME=CLIENT
+    depends_on:
+      - zookeeper
+  kafdrop:
+    image: obsidiandynamics/kafdrop:3.28.0-SNAPSHOT
+    container_name: kafdrop
+    ports:
+      - 9900:9000
+    environment:
+      KAFKA_BROKERCONNECT: "kafka:29092"
+      JVM_OPTS: "-Xms16M -Xmx48M -Xss180K -XX:-TieredCompilation -XX:+UseStringDeduplication -noverify"
+    depends_on:
+      - kafka
+  nexmark-stream:
+    build:
+      context: .
+    container_name: nexmark-stream
+    command: java -cp NEXMarkStream-jar-with-dependencies.jar edu.illinois.sketchbench.datagen.NEXMarkGenerator -kafkaBootServers kafka:9092 -topic NEXMarkTest1 -sleep 100
+    volumes:
+      - ../:/usr/local/var/src
+    depends_on:
+      - kafka
+  spark:
+    build:
+      context: ./docker/components/spark/
+    container_name: spark
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - 8080:8080
+      - 7077:7077
+      - 4044:4040
+  spark-worker-1:
+    build:
+      context: ./docker/components/spark/
+    container_name: spark-worker-1
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - 8081:8081
+      - 4041:4040
+  spark-worker-2:
+    build:
+      context: ./docker/components/spark/
+    container_name: spark-worker-2
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - 8082:8081
+      - 4042:4040
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop3.2.1-java8
+    container_name: namenode
+    restart: always
+    ports:
+      - 9870:9870
+      - 9000:9000
+      - 8020:8020
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./hadoop.env
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop3.2.1-java8
+    container_name: datanode
+    restart: always
+    volumes:
+      - hadoop_datanode:/hadoop/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:9870"
+    env_file:
+      - ./hadoop.env
+  zeppelin:
+    build:
+      context: ./docker/components/zeppelin/
+    ports:
+      - 80:8080
+      - 4040:4040
+    volumes:
+      - ./notebook:/opt/zeppelin/notebook
+    environment:
+      CORE_CONF_fs_defaultFS: "hdfs://namenode:8020"
+      SPARK_MASTER: "spark://spark:7077"
+      MASTER: "spark://spark:7077"
+volumes:
+  zookeeper_data:
+  kafka_data:
+  hadoop_namenode:
+  hadoop_datanode:
