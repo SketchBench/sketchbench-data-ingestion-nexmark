@@ -1,6 +1,5 @@
 ---
 name: CI/CD
-
 on:
   push:
     branches:
@@ -8,7 +7,6 @@ on:
   pull_request:
     branches:
       - main
-
 jobs:
   compile:
     runs-on: ubuntu-latest
@@ -96,4 +94,3 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           repository: sketchbench/sketchbench-${{ matrix.component }}
           short-description: ${{ matrix.description }}
-{"mode":"full","isActive":false}
