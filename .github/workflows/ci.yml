@@ -96,4 +96,3 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
           repository: sketchbench/sketchbench-${{ matrix.component }}
           short-description: ${{ matrix.description }}
-{"mode":"full","isActive":false}
