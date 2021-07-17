@@ -1,0 +1,99 @@
+---
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: docker://maven:3.8.1-openjdk-11-slim
+      - name: Compile
+        run: mvn install
+  build-and-push:
+    needs: compile
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - component: data-ingestion-nexmark
+            version: "0.1.0"
+            latest: true
+            description: Data ingestion of nexmark data for SketchBench.
+            file: Dockerfile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Prepare Docker metadata
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          flavor: |
+            latest=${{ matrix.latest }}
+          labels: |
+            org.opencontainers.image.title=sketchbench-${{ matrix.component }}
+            org.opencontainers.image.description=${{ matrix.description }}
+            org.opencontainers.image.vendor=SketchBench
+          images: |
+            sketchbench/sketchbench-${{ matrix.component }}
+            ghcr.io/SketchBench/sketchbench-${{ matrix.component }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}},value=${{ matrix.version }}
+            type=sha
+            type=edge
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+      - name: Login to Docker Hub
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Login to GitHub Container Registry
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and push
+        id: docker_build
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: ${{ matrix.file }}
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=sketchbench/sketchbench-${{ matrix.component }}:main
+          cache-to: type=inline
+      - name: Inspect image
+        if: github.event_name != 'pull_request'
+        run: |
+          docker pull sketchbench/sketchbench-${{ matrix.component }}:${{ matrix.version }}
+          docker image inspect sketchbench/sketchbench-${{ matrix.component }}:${{ matrix.version }}
+      - name: Check manifest
+        if: github.event_name != 'pull_request'
+        run: |
+          docker buildx imagetools inspect sketchbench/sketchbench-${{ matrix.component }}:${{ matrix.version }}
+      - name: Update Docker Hub repo description
+        if: github.event_name != 'pull_request'
+        uses: peter-evans/dockerhub-description@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: sketchbench/sketchbench-${{ matrix.component }}
+          short-description: ${{ matrix.description }}
+{"mode":"full","isActive":false}
