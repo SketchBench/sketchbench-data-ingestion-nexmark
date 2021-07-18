@@ -49,7 +49,7 @@ public class JSONAuctionStreamGenerator extends Thread{
     public static int DEFAULT_GEN_CALLS = 3000;
     public static boolean DEFAULT_PRETTYPRINT = true;
 
-    public boolean LIMIT_ATTRIBUTES = true;
+    public boolean LIMIT_ATTRIBUTES = false;
     private static final Logger log = Logger.getLogger(JSONAuctionStreamGenerator.class);
     JSONAuctionStreamGenerator auctionStreamGenerator;
 
@@ -87,6 +87,7 @@ public class JSONAuctionStreamGenerator extends Thread{
             tab3 = "\t\t\t";
             nl = "\n";
         }
+        temp = 0;
     }
 
     public JSONAuctionStreamGenerator(int genCalls, boolean prettyprint, JSONAuctionStreamGenerator auctionStreamGenerator){
@@ -103,6 +104,24 @@ public class JSONAuctionStreamGenerator extends Thread{
         }
         this.auctionStreamGenerator = auctionStreamGenerator;
     }
+
+    public JSONAuctionStreamGenerator(int genCalls, String kafkaEndpoint, String topic, int sleepMillis, JSONAuctionStreamGenerator auctionStreamGenerator){
+
+        numGenCalls = genCalls;
+        kafkaBootServers = kafkaEndpoint;
+        kafkaTopic = topic;
+        threadSleep = sleepMillis;
+        producer1 = KafkaMessageSender.createProducer(kafkaBootServers,kafkaTopic);
+        openAuctions = auctionStreamGenerator.openAuctions;
+        if(usePrettyPrint) {
+            tab = "\t";
+            tab2 = "\t\t";
+            tab3 = "\t\t\t";
+            nl = "\n";
+        }
+        this.auctionStreamGenerator = auctionStreamGenerator;
+    }
+
     public void generateStream() throws IOException {
 
         if(LIMIT_ATTRIBUTES)
@@ -123,6 +142,10 @@ public class JSONAuctionStreamGenerator extends Thread{
                 generateOpenAuction(1);
             }
         }
+
+        log.info("kafka endpoint - "+kafkaBootServers);
+        log.info("kafkaTopic  - "+kafkaTopic);
+        log.info("threadSleep  - "+threadSleep);
 
         // now go into a loop generating bids and persons and so on
         // want on average 10 items/person and 10 bids/item
@@ -150,15 +173,15 @@ public class JSONAuctionStreamGenerator extends Thread{
     }
 
     public void incrementCommon() {
-        auctionStreamGenerator.temp++;
+        temp++;
 
-        if (auctionStreamGenerator.temp == 1) {
-            auctionStreamGenerator.startTime2 = System.currentTimeMillis();
+        if (temp == 1) {
+            startTime2 = System.currentTimeMillis();
         }
-        long diff = System.currentTimeMillis() - auctionStreamGenerator.startTime2;
+        long diff = System.currentTimeMillis() - startTime2;
         log.info(Thread.currentThread().getName() + " spent : "
-                + diff + " for the event count : " + auctionStreamGenerator.temp
-                + " with the  Data rate : " + (auctionStreamGenerator.temp * 1000  / diff));
+                + diff + " for the event count : " + temp
+                + " with the  Data rate : " + (temp * 1000  / diff));
     }
 
     private void initMyBuf() throws IOException {
@@ -249,12 +272,13 @@ public class JSONAuctionStreamGenerator extends Thread{
 //                log.info("Message from Stream3 sent to kafka by "
 //                        + Thread.currentThread().getName());
 //
-//                incrementCommon();
+                incrementCommon();
 
 
 
                 try {
-                    Thread.currentThread().sleep(threadSleep);
+                    if(threadSleep != 0)
+                        Thread.currentThread().sleep(threadSleep);
                 } catch (InterruptedException e) {
                     log.info("Error: " + e.getMessage());
                 }
@@ -447,7 +471,8 @@ public class JSONAuctionStreamGenerator extends Thread{
 
 
                 try {
-                    Thread.currentThread().sleep(threadSleep);
+                    if(threadSleep != 0)
+                        Thread.currentThread().sleep(threadSleep);
                 } catch (InterruptedException e) {
                     log.info("Error: " + e.getMessage());
                 }
@@ -693,7 +718,8 @@ public class JSONAuctionStreamGenerator extends Thread{
 
 
                 try {
-                    Thread.currentThread().sleep(threadSleep);
+                    if(threadSleep != 0)
+                        Thread.currentThread().sleep(threadSleep);
                 } catch (InterruptedException e) {
                     log.info("Error: " + e.getMessage());
                 }
@@ -712,16 +738,40 @@ public class JSONAuctionStreamGenerator extends Thread{
         BasicConfigurator.configure();
         log.info("Welcome to kafka message sender");
 
-        JSONAuctionStreamGenerator auctionStreamGenerator1 = new JSONAuctionStreamGenerator(DEFAULT_GEN_CALLS,DEFAULT_PRETTYPRINT);
-        JSONAuctionStreamGenerator auctionStreamGenerator2 = new JSONAuctionStreamGenerator(DEFAULT_GEN_CALLS,DEFAULT_PRETTYPRINT, auctionStreamGenerator1);
-        JSONAuctionStreamGenerator auctionStreamGenerator3 = new JSONAuctionStreamGenerator(DEFAULT_GEN_CALLS,DEFAULT_PRETTYPRINT, auctionStreamGenerator1);
-        JSONAuctionStreamGenerator auctionStreamGenerator4 = new JSONAuctionStreamGenerator(DEFAULT_GEN_CALLS,DEFAULT_PRETTYPRINT, auctionStreamGenerator1);
-        JSONAuctionStreamGenerator auctionStreamGenerator5 = new JSONAuctionStreamGenerator(DEFAULT_GEN_CALLS,DEFAULT_PRETTYPRINT, auctionStreamGenerator1);
-        JSONAuctionStreamGenerator auctionStreamGenerator6 = new JSONAuctionStreamGenerator(DEFAULT_GEN_CALLS,DEFAULT_PRETTYPRINT, auctionStreamGenerator1);
-        JSONAuctionStreamGenerator auctionStreamGenerator7 = new JSONAuctionStreamGenerator(DEFAULT_GEN_CALLS,DEFAULT_PRETTYPRINT, auctionStreamGenerator1);
-        JSONAuctionStreamGenerator auctionStreamGenerator8 = new JSONAuctionStreamGenerator(DEFAULT_GEN_CALLS,DEFAULT_PRETTYPRINT, auctionStreamGenerator1);
-        JSONAuctionStreamGenerator auctionStreamGenerator9 = new JSONAuctionStreamGenerator(DEFAULT_GEN_CALLS,DEFAULT_PRETTYPRINT, auctionStreamGenerator1);
-        JSONAuctionStreamGenerator auctionStreamGenerator10 = new JSONAuctionStreamGenerator(DEFAULT_GEN_CALLS,DEFAULT_PRETTYPRINT, auctionStreamGenerator1);
+        int gencalls = 1000;
+        String kafkaEndpoint = "localhost:9092";
+        String topic = "nexmarkStream";
+        int sleepMillis = 100;
+
+        // process args
+        for (int i = 0; i < args.length; i++) {
+            if (args[i].equals("-gen-calls")) {
+                gencalls = Integer.parseInt(args[i + 1]);
+                i++; // increment past argument
+            } else if (args[i].equals("-kafkaBootServers")) {
+                kafkaEndpoint = args[i + 1];
+                i++;
+            } else if (args[i].equals("-topic")) {
+                topic = args[i + 1];
+                i++;
+            } else if (args[i].equals("-sleep")) {
+                sleepMillis = Integer.valueOf(args[i + 1]).intValue();
+                i++;
+            }
+        }
+
+        new JSONAuctionStreamGenerator(gencalls, kafkaEndpoint, topic, sleepMillis);
+
+        JSONAuctionStreamGenerator auctionStreamGenerator1 = new JSONAuctionStreamGenerator(gencalls, kafkaEndpoint, topic, sleepMillis);
+        JSONAuctionStreamGenerator auctionStreamGenerator2 = new JSONAuctionStreamGenerator(gencalls, kafkaEndpoint, topic, sleepMillis, auctionStreamGenerator1);
+        JSONAuctionStreamGenerator auctionStreamGenerator3 = new JSONAuctionStreamGenerator(gencalls, kafkaEndpoint, topic, sleepMillis, auctionStreamGenerator1);
+        JSONAuctionStreamGenerator auctionStreamGenerator4 = new JSONAuctionStreamGenerator(gencalls, kafkaEndpoint, topic, sleepMillis, auctionStreamGenerator1);
+        JSONAuctionStreamGenerator auctionStreamGenerator5 = new JSONAuctionStreamGenerator(gencalls, kafkaEndpoint, topic, sleepMillis, auctionStreamGenerator1);
+        JSONAuctionStreamGenerator auctionStreamGenerator6 = new JSONAuctionStreamGenerator(gencalls, kafkaEndpoint, topic, sleepMillis, auctionStreamGenerator1);
+        JSONAuctionStreamGenerator auctionStreamGenerator7 = new JSONAuctionStreamGenerator(gencalls, kafkaEndpoint, topic, sleepMillis, auctionStreamGenerator1);
+        JSONAuctionStreamGenerator auctionStreamGenerator8 = new JSONAuctionStreamGenerator(gencalls, kafkaEndpoint, topic, sleepMillis, auctionStreamGenerator1);
+        JSONAuctionStreamGenerator auctionStreamGenerator9 = new JSONAuctionStreamGenerator(gencalls, kafkaEndpoint, topic, sleepMillis, auctionStreamGenerator1);
+        JSONAuctionStreamGenerator auctionStreamGenerator10 = new JSONAuctionStreamGenerator(gencalls, kafkaEndpoint, topic, sleepMillis, auctionStreamGenerator1);
         auctionStreamGenerator1.start();
         auctionStreamGenerator2.start();
         auctionStreamGenerator3.start();

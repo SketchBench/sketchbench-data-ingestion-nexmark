@@ -40,7 +40,8 @@ services:
     build:
       context: .
     container_name: nexmark-stream
-    command: java -cp NEXMarkStream-jar-with-dependencies.jar edu.illinois.sketchbench.datagen.NEXMarkGenerator -kafkaBootServers kafka:9092 -topic NEXMarkTest1 -sleep 100
+    #command: java -cp NEXMarkStream-jar-with-dependencies.jar edu.illinois.sketchbench.datagen.NEXMarkGenerator -kafkaBootServers kafka:9092 -topic NEXMarkTest1 -sleep 0
+    command: java -cp NEXMarkStream-jar-with-dependencies.jar edu.illinois.sketchbench.datagen.JSONAuctionStreamGenerator -kafkaBootServers kafka:9092 -topic NEXMarkTest1 -sleep 100
     volumes:
       - ../:/usr/local/var/src
     depends_on:
