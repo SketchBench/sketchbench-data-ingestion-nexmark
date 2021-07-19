@@ -171,18 +171,18 @@ public class JSONAuctionStreamGenerator extends Thread{
         }
 
     }
-
-    public void incrementCommon() {
-        temp++;
-
-        if (temp == 1) {
-            startTime2 = System.currentTimeMillis();
-        }
-        long diff = System.currentTimeMillis() - startTime2;
-        log.info(Thread.currentThread().getName() + " spent : "
-                + diff + " for the event count : " + temp
-                + " with the  Data rate : " + (temp * 1000  / diff));
-    }
+//
+//    public void incrementCommon() {
+//        temp++;
+//
+//        if (temp == 1) {
+//            startTime2 = System.currentTimeMillis();
+//        }
+//        long diff = System.currentTimeMillis() - startTime2;
+//        log.info(Thread.currentThread().getName() + " spent : "
+//                + diff + " for the event count : " + temp
+//                + " with the  Data rate : " + (temp * 1000  / diff));
+//    }
 
     private void initMyBuf() throws IOException {
         myBuf.clear();
