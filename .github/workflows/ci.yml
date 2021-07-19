@@ -22,7 +22,7 @@ jobs:
       matrix:
         include:
           - component: data-ingestion-nexmark
-            version: "0.1.0"
+            version: "0.1.1"
             latest: true
             description: Data ingestion of nexmark data for SketchBench.
             file: Dockerfile
