@@ -272,7 +272,7 @@ public class JSONAuctionStreamGenerator extends Thread{
 //                log.info("Message from Stream3 sent to kafka by "
 //                        + Thread.currentThread().getName());
 //
-                incrementCommon();
+//                incrementCommon();
 
 
 
