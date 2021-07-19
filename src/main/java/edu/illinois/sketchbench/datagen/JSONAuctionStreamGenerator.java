@@ -179,9 +179,12 @@ public class JSONAuctionStreamGenerator extends Thread{
             startTime2 = System.currentTimeMillis();
         }
         long diff = System.currentTimeMillis() - startTime2;
+//        log.info(Thread.currentThread().getName() + " spent : "
+//                + diff + " for the event count : " + temp
+//                + " with the  Data rate : " + (temp * 1000  / diff));
         log.info(Thread.currentThread().getName() + " spent : "
                 + diff + " for the event count : " + temp
-                + " with the  Data rate : " + (temp * 1000  / diff));
+                + " with the  Data rate : " + (temp * 1000));
     }
 
     private void initMyBuf() throws IOException {
@@ -272,7 +275,7 @@ public class JSONAuctionStreamGenerator extends Thread{
 //                log.info("Message from Stream3 sent to kafka by "
 //                        + Thread.currentThread().getName());
 //
-                incrementCommon();
+//                incrementCommon();
 
 
 
